@@ -54,10 +54,14 @@ jobs:
               print('сертификат: не прочитан', e)
           for url in ['https://mai.ru/press/news/', 'https://mai.ru/press/news/?PAGEN_1=2']:
               try:
-                  r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=30, verify='ru_bundle.pem')
+                  r = requests.get(url, timeout=30, verify='ru_bundle.pem', headers={
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
+                      'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'ru-RU,ru;q=0.9'})
               except Exception as e:
                   print(url, 'ошибка:', e); continue
-              print(url, r.status_code, len(r.text))
+              print(url, r.status_code, len(r.text), dict((k, v) for k, v in r.headers.items() if k.lower() in ('server', 'x-powered-by', 'via')))
+              if r.status_code != 200:
+                  print(r.text[:900])
               soup = BeautifulSoup(r.text, 'html.parser')
               cnt = Counter(t.name + '.' + '.'.join(t.get('class')) for t in soup.find_all(class_=True))
               for k, v in cnt.most_common(40):
