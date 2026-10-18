@@ -2,8 +2,7 @@
 
 **© 2026 Наталия Тылевич. Все права защищены.**
 
-Ноутбуки, тексты заданий, пояснения и код в этом репозитории — авторский учебный материал курса «Прикладное ML: от
-данных к системе». Это не открытая лицензия: права на материал автор никому не передаёт.
+Ноутбуки, тексты заданий, пояснения и код в этом репозитории — авторский учебный материал блока «Анализ изображений: от данных к модели». Это не открытая лицензия: права на материал автор никому не передаёт.
 
 ## Разрешено без отдельного согласия
 
@@ -31,7 +30,7 @@
 
 ---
 
-**© 2026 Natalia Tylevich. All rights reserved.** Course materials for “Applied ML: from data to system”. You may open
+**© 2026 Natalia Tylevich. All rights reserved.** Course materials for “Image Analysis: from data to model”. You may open
 and run the notebooks and keep a personal copy to complete the course assignments. Redistribution, use in other courses
 or trainings, and any commercial use require the author's written permission. Third-party data and libraries remain
 under their own licenses.
