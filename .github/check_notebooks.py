@@ -10,8 +10,13 @@ from nbclient import NotebookClient
 
 os.makedirs('executed', exist_ok=True)
 failed = []
+PARTICIPANT = int(os.environ.get('PARTICIPANT', '0'))   # номер участника из поля ноутбука; пара — тот же номер по модулю 5
 for src in sys.argv[1:]:
     nb = nbformat.read(src, as_version=4)
+    for c in nb.cells:
+        if c.cell_type == 'code':
+            c.source = c.source.replace('participant = 0  #@param', 'participant = %d  #@param' % PARTICIPANT)
+            c.source = c.source.replace('pair = 0  #@param', 'pair = %d  #@param' % (PARTICIPANT % 5))
     NotebookClient(nb, timeout=1800, kernel_name='python3', allow_errors=True,
                    resources={'metadata': {'path': 'executed'}}).execute()
     nbformat.write(nb, os.path.join('executed', os.path.basename(src)))
@@ -31,5 +36,6 @@ for src in sys.argv[1:]:
                 print(o['data']['text/plain'][:3000])
             elif 'image/png' in o.get('data', {}):
                 print('[рисунок]')
+print('\nНомер участника: %d' % PARTICIPANT)
 print('\n' + ('ВСЕ ЯЧЕЙКИ ВЫПОЛНЕНЫ БЕЗ ОШИБОК' if not failed else 'ОШИБКИ:\n' + '\n'.join(failed)))
 sys.exit(1 if failed else 0)
