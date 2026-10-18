@@ -24,55 +24,26 @@ jobs:
             requests beautifulsoup4 pillow nbclient nbformat ipykernel cryptography
           python -m ipykernel install --user --name python3
           pip list 2>/dev/null | grep -iE '^(torch|torchvision|transformers|scikit-learn|scikit-image|networkx|numpy) '
-      - name: Живой сайт новостей — что отдаёт
+      - name: Живой сайт новостей — подсказка-селекторы из ноутбука на страницах 1 и 2
         continue-on-error: true
         run: |
           python - <<'PY'
-          import requests, certifi
-          from bs4 import BeautifulSoup
-          from collections import Counter
-          # Российский корневой сертификат (НУЦ Минцифры) — его нет в стандартном наборе Python
-          ca = requests.get('https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt', timeout=30)
-          print('корневой сертификат:', ca.status_code, len(ca.content))
-          open('ru_bundle.pem', 'w').write(open(certifi.where()).read() + '\n' + ca.text)
-          import ssl, socket
-          for verify in [True, 'ru_bundle.pem']:
-              try:
-                  r = requests.get('https://mai.ru/press/news/', headers={'User-Agent': 'Mozilla/5.0'}, timeout=30, verify=verify)
-                  print('verify=%s →' % verify, r.status_code)
-              except Exception as e:
-                  print('verify=%s → ошибка %s' % (verify, str(e)[:200]))
-          try:
-              ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
-              with socket.create_connection(('mai.ru', 443), timeout=20) as sock:
-                  with ctx.wrap_socket(sock, server_hostname='mai.ru') as ss:
-                      cert = ss.getpeercert(binary_form=True)
-              from cryptography import x509
-              c = x509.load_der_x509_certificate(cert)
-              print('сертификат сайта: выдан', c.issuer.rfc4514_string())
-          except Exception as e:
-              print('сертификат: не прочитан', e)
-          for url in ['https://mai.ru/press/news/', 'https://mai.ru/press/news/?PAGEN_1=2']:
-              try:
-                  r = requests.get(url, timeout=30, verify='ru_bundle.pem', headers={
-                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
-                      'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'ru-RU,ru;q=0.9'})
-              except Exception as e:
-                  print(url, 'ошибка:', e); continue
-              print(url, r.status_code, len(r.text), dict((k, v) for k, v in r.headers.items() if k.lower() in ('server', 'x-powered-by', 'via')))
-              if r.status_code != 200:
-                  print(r.text[:900])
-              soup = BeautifulSoup(r.text, 'html.parser')
-              cnt = Counter(t.name + '.' + '.'.join(t.get('class')) for t in soup.find_all(class_=True))
-              for k, v in cnt.most_common(40):
-                  if v >= 5:
-                      print('  %3d x %s' % (v, k))
-              for k, v in cnt.most_common(12):
-                  if v >= 8:
-                      tag, *cl = k.split('.')
-                      el = soup.find(tag, class_=cl[0]) if cl else None
-                      if el is not None:
-                          print('--- образец', k); print(el.prettify()[:1500])
+          import json, os
+          nb = json.load(open('03_data_collection_labeling.ipynb'))
+          cells = [''.join(c['source']) for c in nb['cells'] if c['cell_type'] == 'code']
+          ns = {}
+          exec(cells[0].split('df = extract(HTML')[0], ns)              # parse_date, extract
+          live = next(c for c in cells if 'def fetch' in c)
+          exec(live.split('    try:')[0].split('try:')[0], ns)           # HEADERS, ru_bundle, fetch
+          ns['item_selector'], ns['title_selector'], ns['date_selector'] = 'a.card', 'h5', 'span.badge'
+          seen = []
+          for u in ['https://mai.ru/press/news/', 'https://mai.ru/press/news/?PAGEN_1=2']:
+              r = ns['fetch'](u)
+              df = ns['extract'](r.text, u)
+              print(u, 'код', r.status_code, '· новостей', len(df), '· без даты', int(df['дата'].isna().sum()))
+              print(df.head(3).to_string())
+              seen.append(set(df['ссылка']))
+          print('страница 2 отличается от первой:', bool(seen[1] - seen[0]))
           PY
       - name: Выполнить все ноутбуки
         run: python .github/check_notebooks.py 0*.ipynb
