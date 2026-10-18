@@ -25,6 +25,7 @@ jobs:
           python -m ipykernel install --user --name python3
           pip list 2>/dev/null | grep -iE '^(torch|torchvision|transformers|scikit-learn|scikit-image|networkx|numpy) '
       - name: Живой сайт новостей — подсказка-селекторы из ноутбука на страницах 1 и 2
+        # сайт чужой и может временно не отвечать — тогда шаг жёлтый, но сломанный код пробы должен быть виден
         continue-on-error: true
         run: |
           python - <<'PY'
@@ -32,7 +33,8 @@ jobs:
           nb = json.load(open('03_data_collection_labeling.ipynb'))
           cells = [''.join(c['source']) for c in nb['cells'] if c['cell_type'] == 'code']
           ns = {}
-          exec(cells[0].split('df = extract(HTML')[0], ns)              # parse_date, extract
+          offline = next(c for c in cells if 'def extract' in c)       # ячейку ищем по содержимому, не по номеру
+          exec(offline.split('df = extract(HTML')[0], ns)               # parse_date, extract
           live = next(c for c in cells if 'def fetch' in c)
           exec(live.split('    try:')[0].split('try:')[0], ns)           # HEADERS, ru_bundle, fetch
           ns['item_selector'], ns['title_selector'], ns['date_selector'] = 'a.card', 'h5', 'span.badge'
