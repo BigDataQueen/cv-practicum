@@ -3,13 +3,15 @@
 Ноутбуки Colab к курсу Наталии Тылевич (© 2026, все права защищены). По одному на модуль. Программировать не нужно: откройте ноутбук, нажмите
 **«Среда выполнения → Выполнить все»** и меняйте параметры в полях справа от ячеек. Данные ноутбук скачивает сам.
 
+Ноутбуки и ссылки на них работают на время курса. Если ссылка не активна — обратитесь к автору.
+
 | Модуль | Ноутбук | Открыть |
 |---|---|---|
-| Вводный · Данные — основа всего | `00_intro_data.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/ml-practicum/blob/main/00_intro_data.ipynb) |
-| 1 · Алгоритмическая база | `01_algorithms.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/ml-practicum/blob/main/01_algorithms.ipynb) |
-| 2 · Графы в ML | `02_graphs.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/ml-practicum/blob/main/02_graphs.ipynb) |
-| 3 · Сбор и разметка данных | `03_data_collection_labeling.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/ml-practicum/blob/main/03_data_collection_labeling.ipynb) |
-| 4 · Компьютерное зрение | `04_computer_vision.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/ml-practicum/blob/main/04_computer_vision.ipynb) |
+| Вводный · Данные — основа всего | `00_intro_data.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/cv-practicum/blob/main/00_intro_data.ipynb) |
+| 1 · Алгоритмическая база | `01_algorithms.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/cv-practicum/blob/main/01_algorithms.ipynb) |
+| 2 · Графы в ML | `02_graphs.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/cv-practicum/blob/main/02_graphs.ipynb) |
+| 3 · Сбор и разметка данных | `03_data_collection_labeling.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/cv-practicum/blob/main/03_data_collection_labeling.ipynb) |
+| 4 · Компьютерное зрение | `04_computer_vision.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BigDataQueen/cv-practicum/blob/main/04_computer_vision.ipynb) |
 
 ## Как начать
 
