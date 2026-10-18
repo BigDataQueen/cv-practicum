@@ -1,4 +1,4 @@
-"""Достать картинки из выполненных ноутбуков: python .github/extract_images.py executed preview"""
+"""Достать картинки и напечатанный текст из выполненных ноутбуков: python .github/extract_images.py executed preview"""
 import base64
 import glob
 import io
@@ -17,6 +17,9 @@ for f in sorted(glob.glob(os.path.join(src, '*.ipynb'))):
     lines += ['## ' + stem, '']
     for i, c in enumerate(nb.cells):
         k = 0
+        text = ''.join(o.get('text', '') for o in c.get('outputs', []) if o.get('output_type') == 'stream')
+        if text.strip():                                      # напечатанные числа — для сверки «Что заметить»
+            lines += ['`[%d]` %s' % (i, c.source.splitlines()[0][:90]), '', '```', text.strip()[-1500:], '```', '']
         for o in c.get('outputs', []):
             if 'image/png' in o.get('data', {}):
                 im = Image.open(io.BytesIO(base64.b64decode(o['data']['image/png']))).convert('RGB')
