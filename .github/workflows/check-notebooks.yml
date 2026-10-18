@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -18,19 +21,40 @@ jobs:
         run: |
           pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
           pip install --quiet transformers numpy scipy scikit-learn scikit-image networkx matplotlib pandas \
-            requests beautifulsoup4 pillow nbclient nbformat ipykernel
+            requests beautifulsoup4 pillow nbclient nbformat ipykernel cryptography
           python -m ipykernel install --user --name python3
           pip list 2>/dev/null | grep -iE '^(torch|torchvision|transformers|scikit-learn|scikit-image|networkx|numpy) '
       - name: Живой сайт новостей — что отдаёт
         continue-on-error: true
         run: |
           python - <<'PY'
-          import requests
+          import requests, certifi
           from bs4 import BeautifulSoup
           from collections import Counter
+          # Российский корневой сертификат (НУЦ Минцифры) — его нет в стандартном наборе Python
+          ca = requests.get('https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt', timeout=30)
+          print('корневой сертификат:', ca.status_code, len(ca.content))
+          open('ru_bundle.pem', 'w').write(open(certifi.where()).read() + '\n' + ca.text)
+          import ssl, socket
+          for verify in [True, 'ru_bundle.pem']:
+              try:
+                  r = requests.get('https://mai.ru/press/news/', headers={'User-Agent': 'Mozilla/5.0'}, timeout=30, verify=verify)
+                  print('verify=%s →' % verify, r.status_code)
+              except Exception as e:
+                  print('verify=%s → ошибка %s' % (verify, str(e)[:200]))
+          try:
+              ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
+              with socket.create_connection(('mai.ru', 443), timeout=20) as sock:
+                  with ctx.wrap_socket(sock, server_hostname='mai.ru') as ss:
+                      cert = ss.getpeercert(binary_form=True)
+              from cryptography import x509
+              c = x509.load_der_x509_certificate(cert)
+              print('сертификат сайта: выдан', c.issuer.rfc4514_string())
+          except Exception as e:
+              print('сертификат: не прочитан', e)
           for url in ['https://mai.ru/press/news/', 'https://mai.ru/press/news/?PAGEN_1=2']:
               try:
-                  r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=30)
+                  r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=30, verify='ru_bundle.pem')
               except Exception as e:
                   print(url, 'ошибка:', e); continue
               print(url, r.status_code, len(r.text))
@@ -48,6 +72,16 @@ jobs:
           PY
       - name: Выполнить все ноутбуки
         run: python .github/check_notebooks.py 0*.ipynb
+      - name: Картинки выводов — в ветку ci-preview
+        if: always()
+        run: |
+          python .github/extract_images.py executed preview
+          cd preview
+          git init -q -b ci-preview
+          git add -A
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -q -m "Картинки выполненных ноутбуков ($GITHUB_SHA)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" ci-preview
       - uses: actions/upload-artifact@v4
         if: always()
         with:
