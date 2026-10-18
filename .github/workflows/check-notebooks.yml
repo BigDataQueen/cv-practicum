@@ -1,0 +1,55 @@
+name: Проверка ноутбуков
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Библиотеки (как в Colab)
+        run: |
+          pip install --quiet torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet transformers numpy scipy scikit-learn scikit-image networkx matplotlib pandas \
+            requests beautifulsoup4 pillow nbclient nbformat ipykernel
+          python -m ipykernel install --user --name python3
+          pip list 2>/dev/null | grep -iE '^(torch|torchvision|transformers|scikit-learn|scikit-image|networkx|numpy) '
+      - name: Живой сайт новостей — что отдаёт
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import requests
+          from bs4 import BeautifulSoup
+          from collections import Counter
+          for url in ['https://mai.ru/press/news/', 'https://mai.ru/press/news/?PAGEN_1=2']:
+              try:
+                  r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=30)
+              except Exception as e:
+                  print(url, 'ошибка:', e); continue
+              print(url, r.status_code, len(r.text))
+              soup = BeautifulSoup(r.text, 'html.parser')
+              cnt = Counter(t.name + '.' + '.'.join(t.get('class')) for t in soup.find_all(class_=True))
+              for k, v in cnt.most_common(40):
+                  if v >= 5:
+                      print('  %3d x %s' % (v, k))
+              for k, v in cnt.most_common(12):
+                  if v >= 8:
+                      tag, *cl = k.split('.')
+                      el = soup.find(tag, class_=cl[0]) if cl else None
+                      if el is not None:
+                          print('--- образец', k); print(el.prettify()[:1500])
+          PY
+      - name: Выполнить все ноутбуки
+        run: python .github/check_notebooks.py 0*.ipynb
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: executed-notebooks
+          path: executed/*.ipynb
